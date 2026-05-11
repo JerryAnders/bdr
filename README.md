@@ -167,7 +167,7 @@ This matters because the main risk of `bdr recall` — that a critical memory mi
 
 `bdr recall` is not a strict upgrade over `bd prime`. Know the limitations before adopting it:
 
-- **Recall is lossy** — it returns the most *similar* memories, not the most *important* ones. A critical constraint may score low for an unrelated query and never surface. Mitigate this by keeping hard rules in CLAUDE.md, not in memories (see above).
+- **Recall is lossy** — it returns the most *similar* memories, not the most *important* ones. "never deploy on Fridays" may score low for an unrelated query and never surface. Mitigate this by keeping hard rules in CLAUDE.md, not in memories (see above).
 - **Similarity ≠ relevance** — the embedding model doesn't understand your project. Memories using different vocabulary than the query may not match even when they should.
 - **The index can drift** — if `bd dolt pull` hasn't been run, `bdr recall` reflects local memories only. `bd prime` always reads from the live database.
 - **More moving parts** — `bdr` requires a downloaded ONNX model, a persistent index, and a separate binary. `bd prime` has no dependencies beyond beads itself.
