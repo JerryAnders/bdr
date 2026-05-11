@@ -41,18 +41,18 @@ bd remember "the vector index lives at .beads/bdr-index/ and is gitignored"
 bdr init
 
 # Semantic search — "release process" shares no keywords with the staging memory,
-# but a vector search should surface it because the concepts are closely related
-bdr recall "release process"
+# but a vector search should surface it because the concepts are closely related.
+# --min-score filters out low-relevance results.
+bdr recall "release process" --min-score 0.2
 ```
 
 Expected output:
 
 ```
 [always-deploy-to-staging-before-production] always deploy to staging before production
-[the-vector-index-lives-at-beads-bdr-index] the vector index lives at .beads/bdr-index/ and is gitignored
 ```
 
-If `bdr recall "release process"` surfaces the staging memory without any shared keywords, vector similarity is working correctly — it found the memory by *meaning*, not by matching words.
+If `bdr recall "release process"` surfaces the staging memory without any shared keywords, vector similarity is working correctly — it found the memory by *meaning*, not by matching words. Without `--min-score`, the top 5 results are always returned regardless of relevance.
 
 ## Usage
 
