@@ -22,6 +22,64 @@ cd bdr
 go install .
 ```
 
+## Usage
+
+```bash
+# One-time setup per project (run after bd init)
+bdr init
+
+# Retrieve semantically relevant memories
+bdr recall "how did we handle authentication?"
+bdr recall "what are the deployment steps?" --top 3
+bdr recall "database conventions" --json
+bdr recall "naming conventions" --keys   # show memory keys alongside values
+```
+
+### Flags for `bdr recall`
+
+| Flag | Default | Description |
+|---|---|---|
+| `--top N` | 5 | Number of results to return |
+| `--min-score F` | 0.2 | Minimum similarity threshold (0.0–1.0) |
+| `--json` | false | Output as JSON array with scores |
+| `--keys` | false | Prefix each result with its memory key |
+
+## What Goes Where
+
+Not everything belongs in `bd remember`. The right separation:
+
+| What | Where | Why |
+|---|---|---|
+| Hard rules ("never deploy on Fridays") | CLAUDE.md | Always in context, never missed |
+| Non-negotiable constraints | CLAUDE.md | Too important to risk a low similarity score |
+| Past decisions and discoveries | `bd remember` / `bdr recall` | Retrieved on demand when relevant |
+| Project conventions learned over time | `bd remember` / `bdr recall` | Surfaces when the agent needs them |
+
+This matters because the main risk of `bdr recall` — that a critical memory might not surface for a given query — disappears if critical constraints live in CLAUDE.md instead. `bdr` is only lossy if you ask it to carry things it shouldn't.
+
+## Why bdr vs `bd prime`
+
+Beads provides `bd prime` to load memories into agent context at session start. It works well for small projects but has two limitations that grow with the project:
+
+- **Staleness** — `bd prime` is a one-shot snapshot. Memories added mid-session via `bd remember` aren't visible until the next session.
+- **Context bloat** — it dumps all memories regardless of relevance. On a project with many memories, most of what gets loaded has nothing to do with the current task.
+
+`bdr recall` addresses both: it syncs new memories on every call so it's always current, and it returns only the memories most relevant to the query. Context stays small and focused.
+
+`bd prime` and `bdr` serve the same goal — giving agents access to project knowledge. `bdr` is better suited to projects where the memory count is growing and precision matters more than completeness.
+
+## Tradeoffs
+
+`bdr recall` is not a strict upgrade over `bd prime`. Know the limitations before adopting it:
+
+- **Recall is lossy** — it returns the most *similar* memories, not the most *important* ones. "never deploy on Fridays" may score low for an unrelated query and never surface. Mitigate this by keeping hard rules in CLAUDE.md, not in memories (see above).
+- **Similarity ≠ relevance** — the embedding model matches on language patterns, not project knowledge. A memory like "the widget service owns user preferences" won't surface for a query like "where should I store this setting?" because the vocabulary doesn't overlap. Write memories in plain, descriptive language that anticipates how you'll search for them later.
+- **The index can drift** — if `bd dolt pull` hasn't been run, `bdr recall` reflects local memories only. `bd prime` always reads from the live database.
+- **More moving parts** — `bdr` requires a downloaded ONNX model, a persistent index, and a separate binary. `bd prime` has no dependencies beyond beads itself.
+- **Context size may not matter** — on small projects with few memories, loading everything via `bd prime` is cheap and complete. `bdr` adds complexity for a problem that may not exist yet.
+
+If any critical memory being silently missed is unacceptable, stick with `bd prime`. `bdr` is the right trade when memory count is large enough that context bloat and staleness outweigh the risk of an occasional miss.
+
 ## Smoke Test: Tool
 
 Verify the tool itself works end-to-end:
@@ -127,64 +185,6 @@ bd close ...            ← closes the issue
 ```
 
 The `bdr recall` result should surface the snake_case and testing memories — constraints the agent applies before writing a single line of code.
-
-## Usage
-
-```bash
-# One-time setup per project (run after bd init)
-bdr init
-
-# Retrieve semantically relevant memories
-bdr recall "how did we handle authentication?"
-bdr recall "what are the deployment steps?" --top 3
-bdr recall "database conventions" --json
-bdr recall "naming conventions" --keys   # show memory keys alongside values
-```
-
-### Flags for `bdr recall`
-
-| Flag | Default | Description |
-|---|---|---|
-| `--top N` | 5 | Number of results to return |
-| `--min-score F` | 0.2 | Minimum similarity threshold (0.0–1.0) |
-| `--json` | false | Output as JSON array with scores |
-| `--keys` | false | Prefix each result with its memory key |
-
-## What Goes Where
-
-Not everything belongs in `bd remember`. The right separation:
-
-| What | Where | Why |
-|---|---|---|
-| Hard rules ("never deploy on Fridays") | CLAUDE.md | Always in context, never missed |
-| Non-negotiable constraints | CLAUDE.md | Too important to risk a low similarity score |
-| Past decisions and discoveries | `bd remember` / `bdr recall` | Retrieved on demand when relevant |
-| Project conventions learned over time | `bd remember` / `bdr recall` | Surfaces when the agent needs them |
-
-This matters because the main risk of `bdr recall` — that a critical memory might not surface for a given query — disappears if critical constraints live in CLAUDE.md instead. `bdr` is only lossy if you ask it to carry things it shouldn't.
-
-## Tradeoffs
-
-`bdr recall` is not a strict upgrade over `bd prime`. Know the limitations before adopting it:
-
-- **Recall is lossy** — it returns the most *similar* memories, not the most *important* ones. "never deploy on Fridays" may score low for an unrelated query and never surface. Mitigate this by keeping hard rules in CLAUDE.md, not in memories (see above).
-- **Similarity ≠ relevance** — the embedding model matches on language patterns, not project knowledge. A memory like "the widget service owns user preferences" won't surface for a query like "where should I store this setting?" because the vocabulary doesn't overlap. Write memories in plain, descriptive language that anticipates how you'll search for them later.
-- **The index can drift** — if `bd dolt pull` hasn't been run, `bdr recall` reflects local memories only. `bd prime` always reads from the live database.
-- **More moving parts** — `bdr` requires a downloaded ONNX model, a persistent index, and a separate binary. `bd prime` has no dependencies beyond beads itself.
-- **Context size may not matter** — on small projects with few memories, loading everything via `bd prime` is cheap and complete. `bdr` adds complexity for a problem that may not exist yet.
-
-If any critical memory being silently missed is unacceptable, stick with `bd prime`. `bdr` is the right trade when memory count is large enough that context bloat and staleness outweigh the risk of an occasional miss.
-
-## Why bdr vs `bd prime`
-
-Beads provides `bd prime` to load memories into agent context at session start. It works well for small projects but has two limitations that grow with the project:
-
-- **Staleness** — `bd prime` is a one-shot snapshot. Memories added mid-session via `bd remember` aren't visible until the next session.
-- **Context bloat** — it dumps all memories regardless of relevance. On a project with many memories, most of what gets loaded has nothing to do with the current task.
-
-`bdr recall` addresses both: it syncs new memories on every call so it's always current, and it returns only the memories most relevant to the query. Context stays small and focused.
-
-`bd prime` and `bdr` serve the same goal — giving agents access to project knowledge. `bdr` is better suited to projects where the memory count is growing and precision matters more than completeness.
 
 ## How It Works
 
