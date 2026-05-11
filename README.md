@@ -150,11 +150,24 @@ bdr recall "naming conventions" --keys   # show memory keys alongside values
 | `--json` | false | Output as JSON array with scores |
 | `--keys` | false | Prefix each result with its memory key |
 
+## What Goes Where
+
+Not everything belongs in `bd remember`. The right separation:
+
+| What | Where | Why |
+|---|---|---|
+| Hard rules ("never deploy on Fridays") | CLAUDE.md | Always in context, never missed |
+| Non-negotiable constraints | CLAUDE.md | Too important to risk a low similarity score |
+| Past decisions and discoveries | `bd remember` / `bdr recall` | Retrieved on demand when relevant |
+| Project conventions learned over time | `bd remember` / `bdr recall` | Surfaces when the agent needs them |
+
+This matters because the main risk of `bdr recall` — that a critical memory might not surface for a given query — disappears if critical constraints live in CLAUDE.md instead. `bdr` is only lossy if you ask it to carry things it shouldn't.
+
 ## Tradeoffs
 
 `bdr recall` is not a strict upgrade over `bd prime`. Know the limitations before adopting it:
 
-- **Recall is lossy** — it returns the most *similar* memories, not the most *important* ones. A critical constraint ("never deploy on Fridays") may score low for an unrelated query and never surface. `bd prime` guarantees nothing is missed.
+- **Recall is lossy** — it returns the most *similar* memories, not the most *important* ones. A critical constraint may score low for an unrelated query and never surface. Mitigate this by keeping hard rules in CLAUDE.md, not in memories (see above).
 - **Similarity ≠ relevance** — the embedding model doesn't understand your project. Memories using different vocabulary than the query may not match even when they should.
 - **The index can drift** — if `bd dolt pull` hasn't been run, `bdr recall` reflects local memories only. `bd prime` always reads from the live database.
 - **More moving parts** — `bdr` requires a downloaded ONNX model, a persistent index, and a separate binary. `bd prime` has no dependencies beyond beads itself.
