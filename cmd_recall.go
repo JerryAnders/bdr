@@ -20,15 +20,45 @@ func runRecall(args []string) error {
 	fs.Usage = func() {
 		fmt.Fprintln(os.Stderr, `usage: bdr recall "<query>" [--top N] [--json] [--min-score F]`)
 	}
-	if err := fs.Parse(args); err != nil {
+
+	// Separate the query (first non-flag arg) from flags so that flags may
+	// appear before or after the query string.
+	var flagArgs, posArgs []string
+	for i := 0; i < len(args); i++ {
+		a := args[i]
+		if len(a) > 1 && a[0] == '-' {
+			flagArgs = append(flagArgs, a)
+			// If this flag takes a value (--top N, --min-score F), consume next arg too.
+			name := a
+			for name[0] == '-' {
+				name = name[1:]
+			}
+			if eqIdx := len(name); eqIdx > 0 {
+				// already has =value inline — no next arg to consume
+				if idx := indexOf(name, '='); idx >= 0 {
+					continue
+				}
+			}
+			f := fs.Lookup(name)
+			if f != nil {
+				if _, isBool := f.Value.(boolFlag); !isBool && i+1 < len(args) {
+					i++
+					flagArgs = append(flagArgs, args[i])
+				}
+			}
+		} else {
+			posArgs = append(posArgs, a)
+		}
+	}
+	if err := fs.Parse(flagArgs); err != nil {
 		return err
 	}
 
-	if fs.NArg() == 0 {
+	if len(posArgs) == 0 {
 		fs.Usage()
 		return fmt.Errorf("query argument required")
 	}
-	query := fs.Arg(0)
+	query := posArgs[0]
 
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -134,6 +164,19 @@ func printJSON(results []store.Result) error {
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
 	return enc.Encode(out)
+}
+
+type boolFlag interface {
+	IsBoolFlag() bool
+}
+
+func indexOf(s string, b byte) int {
+	for i := 0; i < len(s); i++ {
+		if s[i] == b {
+			return i
+		}
+	}
+	return -1
 }
 
 func printText(results []store.Result) {
