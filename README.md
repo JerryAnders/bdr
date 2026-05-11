@@ -150,6 +150,18 @@ bdr recall "naming conventions" --keys   # show memory keys alongside values
 | `--json` | false | Output as JSON array with scores |
 | `--keys` | false | Prefix each result with its memory key |
 
+## Tradeoffs
+
+`bdr recall` is not a strict upgrade over `bd prime`. Know the limitations before adopting it:
+
+- **Recall is lossy** — it returns the most *similar* memories, not the most *important* ones. A critical constraint ("never deploy on Fridays") may score low for an unrelated query and never surface. `bd prime` guarantees nothing is missed.
+- **Similarity ≠ relevance** — the embedding model doesn't understand your project. Memories using different vocabulary than the query may not match even when they should.
+- **The index can drift** — if `bd dolt pull` hasn't been run, `bdr recall` reflects local memories only. `bd prime` always reads from the live database.
+- **More moving parts** — `bdr` requires a downloaded ONNX model, a persistent index, and a separate binary. `bd prime` has no dependencies beyond beads itself.
+- **Context size may not matter** — on small projects with few memories, loading everything via `bd prime` is cheap and complete. `bdr` adds complexity for a problem that may not exist yet.
+
+If any critical memory being silently missed is unacceptable, stick with `bd prime`. `bdr` is the right trade when memory count is large enough that context bloat and staleness outweigh the risk of an occasional miss.
+
 ## Why bdr vs `bd prime`
 
 Beads provides `bd prime` to load memories into agent context at session start. It works well for small projects but has two limitations that grow with the project:
