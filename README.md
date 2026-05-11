@@ -168,7 +168,7 @@ This matters because the main risk of `bdr recall` — that a critical memory mi
 `bdr recall` is not a strict upgrade over `bd prime`. Know the limitations before adopting it:
 
 - **Recall is lossy** — it returns the most *similar* memories, not the most *important* ones. "never deploy on Fridays" may score low for an unrelated query and never surface. Mitigate this by keeping hard rules in CLAUDE.md, not in memories (see above).
-- **Similarity ≠ relevance** — the embedding model doesn't understand your project. Memories using different vocabulary than the query may not match even when they should.
+- **Similarity ≠ relevance** — the embedding model matches on language patterns, not project knowledge. A memory like "the widget service owns user preferences" won't surface for a query like "where should I store this setting?" because the vocabulary doesn't overlap. Write memories in plain, descriptive language that anticipates how you'll search for them later.
 - **The index can drift** — if `bd dolt pull` hasn't been run, `bdr recall` reflects local memories only. `bd prime` always reads from the live database.
 - **More moving parts** — `bdr` requires a downloaded ONNX model, a persistent index, and a separate binary. `bd prime` has no dependencies beyond beads itself.
 - **Context size may not matter** — on small projects with few memories, loading everything via `bd prime` is cheap and complete. `bdr` adds complexity for a problem that may not exist yet.
