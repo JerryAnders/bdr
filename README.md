@@ -150,6 +150,17 @@ bdr recall "naming conventions" --keys   # show memory keys alongside values
 | `--json` | false | Output as JSON array with scores |
 | `--keys` | false | Prefix each result with its memory key |
 
+## Why bdr vs `bd prime`
+
+Beads provides `bd prime` to load memories into agent context at session start. It works well for small projects but has two limitations that grow with the project:
+
+- **Staleness** — `bd prime` is a one-shot snapshot. Memories added mid-session via `bd remember` aren't visible until the next session.
+- **Context bloat** — it dumps all memories regardless of relevance. On a project with many memories, most of what gets loaded has nothing to do with the current task.
+
+`bdr recall` addresses both: it syncs new memories on every call so it's always current, and it returns only the memories most relevant to the query. Context stays small and focused.
+
+`bd prime` and `bdr` serve the same goal — giving agents access to project knowledge. `bdr` is better suited to projects where the memory count is growing and precision matters more than completeness.
+
 ## How It Works
 
 `bdr recall` shells out to `bd memories --json`, incrementally syncs any new memories into a local vector index, embeds your query, and returns the top-N results by cosine similarity. No daemon, no external server, no CGO.
