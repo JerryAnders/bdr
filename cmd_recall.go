@@ -16,7 +16,7 @@ func runRecall(args []string) error {
 	fs := flag.NewFlagSet("recall", flag.ContinueOnError)
 	topN := fs.Int("top", 5, "number of results to return")
 	asJSON := fs.Bool("json", false, "output as JSON array")
-	minScore := fs.Float64("min-score", 0.0, "minimum similarity threshold (0.0–1.0)")
+	minScore := fs.Float64("min-score", 0.2, "minimum similarity threshold (0.0–1.0)")
 	fs.Usage = func() {
 		fmt.Fprintln(os.Stderr, `usage: bdr recall "<query>" [--top N] [--json] [--min-score F]`)
 	}
