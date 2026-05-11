@@ -16,9 +16,10 @@ func runRecall(args []string) error {
 	fs := flag.NewFlagSet("recall", flag.ContinueOnError)
 	topN := fs.Int("top", 5, "number of results to return")
 	asJSON := fs.Bool("json", false, "output as JSON array")
+	showKeys := fs.Bool("keys", false, "prefix each result with its memory key")
 	minScore := fs.Float64("min-score", 0.2, "minimum similarity threshold (0.0–1.0)")
 	fs.Usage = func() {
-		fmt.Fprintln(os.Stderr, `usage: bdr recall "<query>" [--top N] [--json] [--min-score F]`)
+		fmt.Fprintln(os.Stderr, `usage: bdr recall "<query>" [--top N] [--json] [--keys] [--min-score F]`)
 	}
 
 	// Separate the query (first non-flag arg) from flags so that flags may
@@ -113,7 +114,7 @@ func runRecall(args []string) error {
 	if *asJSON {
 		return printJSON(results)
 	}
-	printText(results)
+	printText(results, *showKeys)
 	return nil
 }
 
@@ -179,13 +180,17 @@ func indexOf(s string, b byte) int {
 	return -1
 }
 
-func printText(results []store.Result) {
+func printText(results []store.Result, showKeys bool) {
 	const maxLen = 120
 	for _, r := range results {
 		val := r.Value
 		if len(val) > maxLen {
 			val = val[:maxLen] + "..."
 		}
-		fmt.Printf("[%s] %s\n", r.Key, val)
+		if showKeys {
+			fmt.Printf("[%s] %s\n", r.Key, val)
+		} else {
+			fmt.Println(val)
+		}
 	}
 }

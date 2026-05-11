@@ -72,6 +72,7 @@ bdr recall "deployment lessons" --json
 |---|---|---|
 | `--top N` | 5 | Number of results to return |
 | `--json` | false | Output as JSON array with scores |
+| `--keys` | false | Prefix each result with its memory key |
 | `--min-score F` | 0.2 | Minimum similarity threshold (0.0–1.0) |
 
 ## How It Works
