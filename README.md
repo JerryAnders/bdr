@@ -33,25 +33,26 @@ git init
 bd init
 
 # Add a few memories
-bd remember "tiptap toolbar buttons must use onMouseDown not onClick to prevent focus loss"
-bd remember "always run go vet before committing Go code"
+bd remember "always deploy to staging before production"
+bd remember "the database password is stored in 1Password under infrastructure"
 bd remember "the vector index lives at .beads/bdr-index/ and is gitignored"
 
 # Build the index (downloads ~22MB ONNX model on first run)
 bdr init
 
-# Semantic search — "code quality" has no keywords in common with the go vet memory
-bdr recall "code quality"
+# Semantic search — "release process" shares no keywords with the staging memory,
+# but a vector search should surface it because the concepts are closely related
+bdr recall "release process"
 ```
 
 Expected output:
 
 ```
-[always-run-go-vet-before-committing-go-code] always run go vet before committing Go code
+[always-deploy-to-staging-before-production] always deploy to staging before production
 [the-vector-index-lives-at-beads-bdr-index] the vector index lives at .beads/bdr-index/ and is gitignored
 ```
 
-If `bdr recall "code quality"` surfaces the go-vet memory without any shared keywords, vector similarity is working correctly.
+If `bdr recall "release process"` surfaces the staging memory without any shared keywords, vector similarity is working correctly — it found the memory by *meaning*, not by matching words.
 
 ## Usage
 
