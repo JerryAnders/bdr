@@ -80,8 +80,23 @@ func runInit(args []string) error {
 
 	warnIfNoDoltRemote()
 
-	fmt.Printf("Indexed %d memories. Ready.\n", len(memories))
+	fmt.Printf("Indexed %d memories. Ready.\n\n", len(memories))
+	printClaudeMdInstructions()
 	return nil
+}
+
+const claudeMdSnippet = `## Semantic Memory (bdr)
+- Before claiming an issue, run ` + "`" + `bdr recall "<issue title and description>"` + "`" + `
+  to retrieve relevant past decisions and context.
+- When a question arises mid-task, run ` + "`" + `bdr recall "<your question>"` + "`" + `
+  before proceeding.
+- After every commit, run ` + "`" + `bd remember "<summary of key decision or context>"` + "`" + `
+  to preserve important decisions for future sessions.`
+
+func printClaudeMdInstructions() {
+	fmt.Println("To enable semantic memory in agents, add the following to your CLAUDE.md and/or AGENTS.md:")
+	fmt.Println()
+	fmt.Println(claudeMdSnippet)
 }
 
 func warnIfNoDoltRemote() {
