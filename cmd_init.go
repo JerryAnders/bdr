@@ -86,12 +86,17 @@ func runInit(args []string) error {
 }
 
 const claudeMdSnippet = `## Semantic Memory (bdr)
-- Before claiming an issue, run ` + "`" + `bdr recall "<issue title and description>"` + "`" + `
-  to retrieve relevant past decisions and context.
-- When a question arises mid-task, run ` + "`" + `bdr recall "<your question>"` + "`" + `
-  before proceeding.
-- After every commit, run ` + "`" + `bd remember "<summary of key decision or context>"` + "`" + `
-  to preserve important decisions for future sessions.`
+
+Before claiming any issue, you MUST run ` + "`" + `bdr recall` + "`" + ` with the issue title to surface
+relevant past decisions and conventions. Do not skip this — it prevents repeating past mistakes.
+
+` + "```" + `bash
+bdr recall "<issue title or description>"
+` + "```" + `
+
+When a question arises mid-task, run ` + "`" + `bdr recall "<your question>"` + "`" + ` before proceeding.
+
+After every commit, run ` + "`" + `bd remember "<key decision or context>"` + "`" + ` to preserve it for future sessions.`
 
 func printClaudeMdInstructions() {
 	fmt.Println("To enable semantic memory in agents, add the following to your CLAUDE.md and/or AGENTS.md:")
