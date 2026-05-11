@@ -22,9 +22,9 @@ cd bdr
 go install .
 ```
 
-## Smoke Test
+## Smoke Test: Tool
 
-Run this to verify everything works end-to-end:
+Verify the tool itself works end-to-end:
 
 ```bash
 mkdir /tmp/test-bdr && cd /tmp/test-bdr
@@ -42,17 +42,91 @@ bdr init
 
 # Semantic search — "release process" shares no keywords with the staging memory,
 # but a vector search should surface it because the concepts are closely related.
-# --min-score filters out low-relevance results.
-bdr recall "release process" --min-score 0.2
+bdr recall "release process"
 ```
 
 Expected output:
 
 ```
-[always-deploy-to-staging-before-production] always deploy to staging before production
+always deploy to staging before production
 ```
 
-If `bdr recall "release process"` surfaces the staging memory without any shared keywords, vector similarity is working correctly — it found the memory by *meaning*, not by matching words. Without `--min-score`, the top 5 results are always returned regardless of relevance.
+If `bdr recall "release process"` surfaces the staging memory without any shared keywords, vector similarity is working correctly — it found the memory by *meaning*, not by matching words.
+
+## Smoke Test: Agent Integration
+
+Verify that agents automatically call `bdr recall` before starting work.
+
+**Setup:**
+
+```bash
+mkdir /tmp/test-bdr-agent && cd /tmp/test-bdr-agent
+git init
+bd init
+
+bd remember "always write tests before marking a task complete"
+bd remember "use snake_case for all Python function names"
+bd remember "deploy to staging.example.com before production"
+bd remember "never use print statements for debugging — use the logger"
+bd remember "database migrations must be reviewed by a second engineer"
+
+bdr init
+```
+
+**Configure CLAUDE.md:**
+
+`bdr init` prints the snippet to add. Your CLAUDE.md should look like this — note the trimmed beads section (no aggressive session-completion mandates) and the explicit `bdr recall` requirement:
+
+```markdown
+## Beads Issue Tracker
+
+This project uses **bd (beads)** for issue tracking.
+
+` + "```" + `bash
+bd ready              # Find available work
+bd show <id>          # View issue details
+bd update <id> --claim  # Claim work
+bd close <id>         # Complete work
+` + "```" + `
+
+- Use `bd` for task tracking — do NOT use TodoWrite, TaskCreate, or markdown TODO lists
+- Use `bd remember` for persistent knowledge — do NOT use MEMORY.md files
+
+## Semantic Memory (bdr)
+
+Before claiming any issue, you MUST run `bdr recall` with the issue title to surface
+relevant past decisions and conventions. Do not skip this — it prevents repeating past mistakes.
+
+` + "```" + `bash
+bdr recall "<issue title or description>"
+` + "```" + `
+
+When a question arises mid-task, run `bdr recall "<your question>"` before proceeding.
+
+After every commit, run `bd remember "<key decision or context>"` to preserve it for future sessions.
+```
+
+> **Note on `bd prime`:** If your CLAUDE.md or AGENTS.md references `bd prime`, remove it. `bd prime` dumps all memories into context at session start — the opposite of what `bdr` does. Let `bdr recall` surface memories on demand instead.
+
+**Run the test:**
+
+Open a Claude Code session in the project directory and give it a task that requires creating a beads issue:
+
+```
+Create a Python utility module with arithmetic functions and tests
+```
+
+**Expected behavior:**
+
+```
+bd create ...           ← creates the issue
+bdr recall "..."        ← fires automatically before claiming
+bd update ... --claim   ← claims the issue
+... writes code ...
+bd close ...            ← closes the issue
+```
+
+The `bdr recall` result should surface the snake_case and testing memories — constraints the agent applies before writing a single line of code.
 
 ## Usage
 
@@ -61,9 +135,10 @@ If `bdr recall "release process"` surfaces the staging memory without any shared
 bdr init
 
 # Retrieve semantically relevant memories
-bdr recall "how did we handle watermarks?"
-bdr recall "what was the tiptap fix?" --top 3
-bdr recall "deployment lessons" --json
+bdr recall "how did we handle authentication?"
+bdr recall "what are the deployment steps?" --top 3
+bdr recall "database conventions" --json
+bdr recall "naming conventions" --keys   # show memory keys alongside values
 ```
 
 ### Flags for `bdr recall`
@@ -71,9 +146,9 @@ bdr recall "deployment lessons" --json
 | Flag | Default | Description |
 |---|---|---|
 | `--top N` | 5 | Number of results to return |
+| `--min-score F` | 0.2 | Minimum similarity threshold (0.0–1.0) |
 | `--json` | false | Output as JSON array with scores |
 | `--keys` | false | Prefix each result with its memory key |
-| `--min-score F` | 0.2 | Minimum similarity threshold (0.0–1.0) |
 
 ## How It Works
 
